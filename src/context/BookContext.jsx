@@ -1,37 +1,71 @@
-import { createContext, useState, useContext } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 
 const BookContext = createContext();
 
 export const BookProvider = ({ children }) => {
-    const [books, setBooks] = useState([]);
-    const [readBooks, setReadBooks] = useState([]);
+    const [books, setBooks] = useState(() => {
+        const storedBooks = localStorage.getItem('books');
+        return storedBooks ? JSON.parse(storedBooks) : [];
+    });
+
+    const [allBooks, setAllBooks] = useState(() => {
+        const storedAllBooks = localStorage.getItem('allBooks');
+        return storedAllBooks ? JSON.parse(storedAllBooks) : [];
+    });
+
+    const [readBooks, setReadBooks] = useState(() => {
+        const storedReadBooks = localStorage.getItem('readBooks');
+        return storedReadBooks ? JSON.parse(storedReadBooks) : [];
+    });
+
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        localStorage.setItem('books', JSON.stringify(books));
+    }, [books]);
+
+    useEffect(() => {
+        localStorage.setItem('allBooks', JSON.stringify(allBooks));
+    }, [allBooks]);
+
+    useEffect(() => {
+        localStorage.setItem('readBooks', JSON.stringify(readBooks));
+    }, [readBooks]);
 
     const addBook = (book) => {
-        setBooks([...books, { ...book, id: Date.now() }]);
+        const newBook = { ...book, id: Date.now() };
+        setBooks((prevBooks) => [...prevBooks, newBook]);
+        setAllBooks((prevAllBooks) => [...prevAllBooks, newBook]);
     };
 
     const updateBook = (id, updatedBook) => {
-        setBooks(books.map(book => (book.id === id ? { ...book, ...updatedBook } : book)));
+        setBooks((prevBooks) =>
+            prevBooks.map((book) => (book.id === id ? { ...book, ...updatedBook } : book))
+        );
+        setAllBooks((prevAllBooks) =>
+            prevAllBooks.map((book) => (book.id === id ? { ...book, ...updatedBook } : book))
+        );
     };
 
     const deleteBook = (id) => {
-        setBooks(books.filter(book => book.id !== id));
-        setReadBooks(readBooks.filter(book => book.id !== id));
+        setBooks((prevBooks) => prevBooks.filter((book) => book.id !== id));
+        setAllBooks((prevAllBooks) => prevAllBooks.filter((book) => book.id !== id));
+        setReadBooks((prevReadBooks) => prevReadBooks.filter((book) => book.id !== id));
     };
 
     const markAsRead = (id) => {
-        const bookToMark = books.find(book => book.id === id);
-        if (bookToMark && !readBooks.some(book => book.id === id)) {
-            setReadBooks([...readBooks, { ...bookToMark, isRead: true }]);
-            setBooks(books.filter(book => book.id !== id));
+        const bookToMark = books.find((book) => book.id === id);
+        if (bookToMark && !readBooks.some((book) => book.id === id)) {
+            setReadBooks((prevReadBooks) => [...prevReadBooks, { ...bookToMark, isRead: true }]);
+            setBooks((prevBooks) => prevBooks.filter((book) => book.id !== id));
         }
     };
 
     const markAsUnread = (id) => {
-        const bookToUnmark = readBooks.find(book => book.id === id);
+        const bookToUnmark = readBooks.find((book) => book.id === id);
         if (bookToUnmark) {
-            setBooks([...books, { ...bookToUnmark, isRead: false }]);
-            setReadBooks(readBooks.filter(book => book.id !== id));
+            setBooks((prevBooks) => [...prevBooks, { ...bookToUnmark, isRead: false }]);
+            setReadBooks((prevReadBooks) => prevReadBooks.filter((book) => book.id !== id));
         }
     };
 
@@ -39,14 +73,18 @@ export const BookProvider = ({ children }) => {
         <BookContext.Provider
             value={{
                 books,
+                allBooks,
                 readBooks,
                 addBook,
                 updateBook,
                 deleteBook,
                 markAsRead,
                 markAsUnread,
-                setBooks, // Para el hook personalizado
-                setReadBooks, // Para el hook personalizado
+                setBooks,
+                setAllBooks,
+                setReadBooks,
+                isLoading,
+                setIsLoading,
             }}
         >
             {children}

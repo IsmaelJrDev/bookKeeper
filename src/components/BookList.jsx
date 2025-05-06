@@ -1,8 +1,7 @@
 import { useBookContext } from '../context/BookContext';
-import BookItem from './BookItem';
 
 const BookList = () => {
-    const { books } = useBookContext();
+    const { books, deleteBook, updateBook, markAsRead } = useBookContext();
 
     return (
         <div className="card">
@@ -11,8 +10,33 @@ const BookList = () => {
                 <p>No hay libros registrados.</p>
             ) : (
                 <ul>
-                    {books.map(book => (
-                        <BookItem key={book.id} book={book} />
+                    {books.map((book) => (
+                        <li key={book.id}>
+                            <div>
+                                <strong>{book.title}</strong>
+                                <p>{book.author} - {book.genre} ({book.year})</p>
+                            </div>
+                            <div className="book-actions">
+                                <button
+                                    className="button-edit"
+                                    onClick={() => updateBook(book.id, { title: 'Nuevo Título' })}
+                                >
+                                    Editar
+                                </button>
+                                <button
+                                    className="button-delete"
+                                    onClick={() => deleteBook(book.id)}
+                                >
+                                    Eliminar
+                                </button>
+                                <button
+                                    className="button-read"
+                                    onClick={() => markAsRead(book.id)}
+                                >
+                                    Marcar como Leído
+                                </button>
+                            </div>
+                        </li>
                     ))}
                 </ul>
             )}
